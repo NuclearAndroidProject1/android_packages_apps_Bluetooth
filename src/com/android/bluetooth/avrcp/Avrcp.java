@@ -773,8 +773,8 @@ public final class Avrcp {
                 String[] ExternalPath = stringUri.split("/");
                 if (ExternalPath.length < 4) {
                     Log.d(TAG, "Wrong entries.");
-                    handler.obtainMessage(MSG_UPDATE_BROWSED_PLAYER_FOLDER, 0, 0, null)
-                                                                        .sendToTarget();
+                    handler.obtainMessage(MSG_UPDATE_BROWSED_PLAYER_FOLDER, 0, INTERNAL_ERROR,
+                                                                  null).sendToTarget();
                     return;
                 }
                 Uri uri = Uri.parse(stringUri);
@@ -793,11 +793,11 @@ public final class Avrcp {
                     // Don't send the complete path to CK as few gets confused by that
                     // Send only the name of the root folder
                     handler.obtainMessage(MSG_UPDATE_BROWSED_PLAYER_FOLDER, NUM_ROOT_ELEMENTS,
-                                                1, SplitPath).sendToTarget();
+                                                OPERATION_SUCCESSFUL, SplitPath).sendToTarget();
                 }
             } else {
-                handler.obtainMessage(MSG_UPDATE_BROWSED_PLAYER_FOLDER, 0, 0, null)
-                                                                    .sendToTarget();
+                handler.obtainMessage(MSG_UPDATE_BROWSED_PLAYER_FOLDER, 0, INTERNAL_ERROR,
+                                                                  null).sendToTarget();
             }
         }
 
@@ -1766,8 +1766,9 @@ public final class Avrcp {
         updateResetNotification(NOW_PALYING_CONTENT_CHANGED_NOTIFICATION);
     }
 
-    void updateBrowsedPlayerFolder(int numOfItems, int folderDepth, String[] folderNames) {
-        Log.v(TAG, "updateBrowsedPlayerFolder: folderDepth: " + folderDepth);
+    void updateBrowsedPlayerFolder(int numOfItems, int status, String[] folderNames) {
+        Log.v(TAG, "updateBrowsedPlayerFolder: numOfItems =  " + numOfItems
+              + " status = " + status);
         if (mBrowserDevice == null) {
             Log.e(TAG,"mBrowserDevice is null for music player called api");
         }
@@ -1781,15 +1782,9 @@ public final class Avrcp {
         deviceFeatures[deviceIndex].mCurrentPathUid = null;
         deviceFeatures[deviceIndex].mMediaUri = mMediaUriStatic;
         mMediaUriStatic = null;
-        if (folderDepth > 0) {
-            setBrowsedPlayerRspNative((byte)OPERATION_SUCCESSFUL ,
-                    0x0, numOfItems, folderDepth, CHAR_SET_UTF8,
-                    folderNames, getByteAddress(device));
-        } else {
-            setBrowsedPlayerRspNative((byte)INTERNAL_ERROR ,
-                    0x0, numOfItems, folderDepth, CHAR_SET_UTF8,
-                    folderNames, getByteAddress(device));
-        }
+
+        setBrowsedPlayerRspNative((byte)status, 0x0, numOfItems, 0x0, CHAR_SET_UTF8,
+                                   folderNames, getByteAddress(device));
         mBrowserDevice = null;
     }
 
@@ -2423,28 +2418,33 @@ public final class Avrcp {
                 case FOLDER_DOWN:
                     if (deviceFeatures[deviceIndex].mCurrentPathUid == null) {
                         Cursor cursor = null;
+                        String[] playlistMemberCols = new String[] {
+                            MediaStore.Audio.Playlists.Members._ID,
+                            MediaStore.Audio.Media.TITLE,
+                            MediaStore.Audio.Media.DATA,
+                            MediaStore.Audio.Media.ALBUM,
+                            MediaStore.Audio.Media.ARTIST,
+                            MediaStore.Audio.Media.DURATION,
+                            MediaStore.Audio.Playlists.Members.PLAY_ORDER,
+                            MediaStore.Audio.Playlists.Members.AUDIO_ID,
+                            MediaStore.Audio.Media.IS_MUSIC
+                        };
                         try {
-                            String[] cols = new String[] {
-                                MediaStore.Audio.Playlists._ID,
-                                MediaStore.Audio.Playlists.NAME
-                            };
-
+                            Uri uri = MediaStore.Audio.Playlists.Members.getContentUri("external",
+                                               folderUid);
                             StringBuilder where = new StringBuilder();
-                            where.append(MediaStore.Audio.Playlists.NAME + " != ''");
-
-                            cursor = mContext.getContentResolver().query(
-                                MediaStore.Audio.Playlists.EXTERNAL_CONTENT_URI,
-                                cols, MediaStore.Audio.Playlists._ID + "=" + folderUid,
-                                null, null);
-
-                            if ((cursor == null) || (cursor.getCount() == 0)) {
-                                status = DOES_NOT_EXIST;
-                            } else{
-                                numberOfItems = cursor.getCount();
+                            where.append(MediaStore.Audio.Media.TITLE + " != ''");
+                            cursor = mContext.getContentResolver().query(uri, playlistMemberCols,
+                                            where.toString(), null,
+                                            MediaStore.Audio.Playlists.Members.DEFAULT_SORT_ORDER);
+                            if (cursor != null) {
+                                numberOfItems =  cursor.getCount();
                                 deviceFeatures[deviceIndex].mCurrentPathUid =
                                         String.valueOf(folderUid);
                                 deviceFeatures[deviceIndex].mCurrentPath =
                                         PATH_PLAYLISTS;
+                            } else {
+                                status = DOES_NOT_EXIST;
                             }
                         } catch (Exception e) {
                             Log.e(TAG, "Exception " + e);
@@ -3635,6 +3635,9 @@ public final class Avrcp {
                             reqItems = count;
                         }
                         cursor.moveToFirst();
+                        for (int i = 0; i < start; i++) {
+                            cursor.moveToNext();
+                        }
                         int index = 0;
                         for (index = 0; index < reqItems; index++) {
                             itemType[index] = TYPE_FOLDER_ITEM;

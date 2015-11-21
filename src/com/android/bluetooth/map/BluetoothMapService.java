@@ -271,7 +271,7 @@ public class BluetoothMapService extends ProfileService {
      * @param masId use -1 to stop all instances
      */
     private void stopObexServerSessions(int masId) {
-        if (DEBUG) Log.d(TAG, "MAP Service STOP ObexServerSessions()");
+        if (DEBUG) Log.d(TAG, "MAP Service STOP ObexServerSessions() masId: " + masId);
 
         boolean lastMasInst = true;
 
@@ -293,7 +293,7 @@ public class BluetoothMapService extends ProfileService {
         BluetoothMapMasInstance masInst = mMasInstances.get(masId); // returns null for -1
         if(masInst != null) {
             masInst.restartObexServerSession();
-        } else {
+        } else  if(masId == -1) {
             for(int i=0, c=mMasInstances.size(); i < c; i++) {
                 mMasInstances.valueAt(i).restartObexServerSession();
             }
@@ -407,7 +407,7 @@ public class BluetoothMapService extends ProfileService {
                     if (DEBUG) Log.d(TAG,"ContentObserver Registration MASID: " + msg.arg1
                         + " Enable: " + msg.arg2);
                     BluetoothMapMasInstance masInst = mMasInstances.get(msg.arg1);
-                    if (masInst != null) {
+                    if (masInst != null && masInst.mObserver != null) {
                         try {
                             if (msg.arg2 == BluetoothMapAppParams.NOTIFICATION_STATUS_YES) {
                                 masInst.mObserver.registerObserver();
@@ -642,7 +642,6 @@ public class BluetoothMapService extends ProfileService {
         if (DEBUG) Log.d(TAG,"updateMasInstancesHandler() state = " + getState());
         boolean changed = false;
 
-        if(getState() == BluetoothMap.STATE_DISCONNECTED) {
             ArrayList<BluetoothMapAccountItem> newAccountList =
                     mAppObserver.getEnabledAccountItems();
             ArrayList<BluetoothMapAccountItem> newAccounts = null;
@@ -702,9 +701,6 @@ public class BluetoothMapService extends ProfileService {
                 }
             }
             mAccountChanged = false;
-        } else {
-            mAccountChanged = true;
-        }
         return changed;
     }
 

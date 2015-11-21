@@ -190,8 +190,10 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler implemen
             ContentValues updateValues;
 
             Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
+            if (V) Log.v(TAG, "Is ContentResolverUpdateThread Interrupted :" + isInterrupted());
+            /*  Check if the Operation is interrupted before entering into loop */
 
-            while (true) {
+            while ( !isInterrupted() ) {
                 updateValues = new ContentValues();
                 updateValues.put(BluetoothShare.CURRENT_BYTES, position);
                 mContext1.getContentResolver().update(contentUri, updateValues,
@@ -350,6 +352,8 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler implemen
             needConfirm = false;
         }
 
+        mServerBlocking = true;
+
         if (isWhitelisted) {
             values.put(BluetoothShare.USER_CONFIRMATION,
                     BluetoothShare.USER_CONFIRMATION_HANDOVER_CONFIRMED);
@@ -378,7 +382,6 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler implemen
                 mPartialWakeLock.acquire();
                 mWakeLock.release();
             }
-            mServerBlocking = true;
             try {
 
                 while (mServerBlocking) {
