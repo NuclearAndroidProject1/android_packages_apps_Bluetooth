@@ -169,9 +169,7 @@ public class SapServer extends Thread implements Callback {
      * @param testMode Use SapMessage.TEST_MODE_XXX
      */
     public void setTestMode(int testMode) {
-        if(SapMessage.TEST) {
             mTestMode = testMode;
-        }
     }
 
     private void sendDisconnectInd(int discType) {

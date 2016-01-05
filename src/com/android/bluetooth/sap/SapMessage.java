@@ -28,7 +28,6 @@ public class SapMessage {
     public static final String TAG = "SapMessage";
     public static final boolean DEBUG = Log.isLoggable(SapService.LOG_TAG, Log.DEBUG);
     public static final boolean VERBOSE = Log.isLoggable(SapService.LOG_TAG, Log.VERBOSE);
-    public static final boolean TEST = false;
 
     /* Message IDs - SAP specification */
     public static final int ID_CONNECT_REQ        = 0x00;
@@ -455,6 +454,7 @@ public class SapMessage {
         int paramLength;
         boolean success = true;
         int skipLen = 0;
+
         for(int i = 0; i < count; i++) {
             paramId = is.read();
             is.read(); // Skip the reserved byte
@@ -631,8 +631,10 @@ public class SapMessage {
 
         /* Payload */
         os.write(value);
-        for(int i = 0, n = 4 - (value.length % 4) ; i < n; i++) {
-            os.write(0); // Padding
+        if (value.length % 4 != 0) {
+            for (int i = 0; i < (4 - (value.length % 4)); ++i) {
+                os.write(0); // Padding
+            }
         }
     }
 
