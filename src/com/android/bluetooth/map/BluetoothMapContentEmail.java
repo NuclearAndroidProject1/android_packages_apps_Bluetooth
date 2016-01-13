@@ -1062,9 +1062,9 @@ public class BluetoothMapContentEmail extends BluetoothMapContent {
          * should cause all parameters to be included in the message list. */
         if(ap.getParameterMask() == BluetoothMapAppParams.INVALID_VALUE_PARAMETER ||
                 ap.getParameterMask() == 0) {
-            ap.setParameterMask(PARAMETER_MASK_DEFAULT);
+            ap.setParameterMask(PARAMETER_MASK_ALL_ENABLED);
             if (V) Log.v(TAG, "msgListing(): appParameterMask is zero or not present, " +
-                    "changing to default: " + ap.getParameterMask());
+                    "changing to all enabled by default: " + ap.getParameterMask());
         }
         if (V) Log.v(TAG, "folderElement hasSmsMmsContent = " + folderElement.hasSmsMmsContent() +
                 " folderElement.hasEmailContent = " + folderElement.hasEmailContent() +
@@ -1787,6 +1787,10 @@ public class BluetoothMapContentEmail extends BluetoothMapContent {
                    message.setType(TYPE.EMAIL);
                    message.setVersionString(mMessageVersion);
                    message.setContentType("Content-Type: text/plain; charset=\"UTF-8\"");
+                   message.setDate(c.getLong(c.getColumnIndex(BluetoothMapEmailContract
+                       .ExtEmailMessageColumns.TIMESTAMP)));
+                   message.setSubject(c.getString(c.getColumnIndex(BluetoothMapContract
+                       .MessageColumns.SUBJECT)));
                    // Set folder:
                    long folderId = c.getLong( c.getColumnIndex(BluetoothMapEmailContract
                            .ExtEmailMessageColumns.MAILBOX_KEY));

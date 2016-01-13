@@ -170,11 +170,10 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler implemen
     }
 
     private class ContentResolverUpdateThread extends Thread {
-
         private static final int sSleepTime = 1000;
         private Uri contentUri;
         private Context mContext1;
-        private volatile boolean interrupted = false;
+
         public ContentResolverUpdateThread(Context context, Uri cntUri) {
             super("BtOpp Server ContentResolverUpdateThread");
             mContext1 = context;
@@ -186,29 +185,30 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler implemen
 
             Process.setThreadPriority(Process.THREAD_PRIORITY_BACKGROUND);
             ContentValues updateValues;
+
             if (V) Log.v(TAG, "Is ContentResolverUpdateThread Interrupted :" + isInterrupted());
             /*  Check if the Operation is interrupted before entering into loop */
             while ( !isInterrupted() ) {
-               updateValues = new ContentValues();
-               updateValues.put(BluetoothShare.CURRENT_BYTES, position);
-               mContext1.getContentResolver().update(contentUri, updateValues,
-                   null, null);
-               /* Check if the Operation is interrupted before entering sleep */
-               if (isInterrupted()) {
-                   if (V) Log.v(TAG, "ContentResolverUpdateThread was interrupted before sleep !,"+
-                                     " exiting");
-                   return ;
-               }
 
-               try {
-                   Thread.sleep(sSleepTime);
-               } catch (InterruptedException e1) {
-                   if (V) Log.v(TAG, "Server ContentResolverUpdateThread was interrupted (1),"+
+                updateValues = new ContentValues();
+                updateValues.put(BluetoothShare.CURRENT_BYTES, position);
+                mContext1.getContentResolver().update(contentUri, updateValues,
+                        null, null);
+                /* Check if the Operation is interrupted before entering sleep */
+                if (isInterrupted()) {
+                    if (V) Log.v(TAG, "ContentResolverUpdateThread was interrupted before sleep !,"+
+                                     " exiting");
+                    return ;
+                }
+                try {
+                    Thread.sleep(sSleepTime);
+                } catch (InterruptedException e1) {
+                    if (V) Log.v(TAG, "Server ContentResolverUpdateThread was interrupted (1),"+
                                      " exiting");
                    return ;
-               }
-            }
-        }
+              }
+           }
+       }
     }
     /*
     * Called when a ABORT request is received.
@@ -507,7 +507,6 @@ public class BluetoothOppObexServerSession extends ServerRequestHandler implemen
         int status = -1;
         BufferedOutputStream bos = null;
         ContentResolverUpdateThread uiUpdateThread = null;
-
 
         InputStream is = null;
         boolean error = false;

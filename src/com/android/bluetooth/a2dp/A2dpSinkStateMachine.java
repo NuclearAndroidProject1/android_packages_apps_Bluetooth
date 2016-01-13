@@ -428,6 +428,12 @@ final class A2dpSinkStateMachine extends StateMachine {
                         mCurrentDevice = device;
                         transitionTo(mConnected);
                     }
+                    // the other profile connection should be initiated
+                    AdapterService adapterService = AdapterService.getAdapterService();
+                    if (adapterService != null) {
+                        adapterService.connectOtherProfile(device,
+                                AdapterService.PROFILE_CONN_CONNECTED);
+                    }
                 } else {
                     //reject the connection and stay in Disconnected state itself
                     logi("Incoming A2DP rejected");
@@ -598,6 +604,13 @@ final class A2dpSinkStateMachine extends StateMachine {
                         transitionTo(mConnected);
                     }
                 }
+                // the other profile connection should be initiated
+                AdapterService adapterService = AdapterService.getAdapterService();
+                if (adapterService != null) {
+                    adapterService.connectOtherProfile(device,
+                            AdapterService.PROFILE_CONN_CONNECTED);
+                }
+
                 break;
             case CONNECTION_STATE_CONNECTING:
                 if ((mCurrentDevice != null) && mCurrentDevice.equals(device)) {
@@ -1090,9 +1103,6 @@ final class A2dpSinkStateMachine extends StateMachine {
         AvrcpControllerService avrcpCtrlService = AvrcpControllerService.getAvrcpControllerService();
         if ((avrcpCtrlService != null) && (mDevice != null) &&
             (avrcpCtrlService.getConnectedDevices().contains(mDevice))){
-            if (mPlayingDevice == null){
-                return true; // don't send Pause if we are not playing already.
-            }
             avrcpCtrlService.sendPassThroughCmd(mDevice, AVRC_ID_PAUSE, KEY_STATE_PRESSED);
             avrcpCtrlService.sendPassThroughCmd(mDevice, AVRC_ID_PAUSE, KEY_STATE_RELEASED);
             log(" SendPassThruPause command sent - ");

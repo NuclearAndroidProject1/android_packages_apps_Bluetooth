@@ -63,16 +63,13 @@ public class BluetoothOppReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         String action = intent.getAction();
 
-
-
         /* Ignore if Broadcast action is not transfer complete and Invalid user */
-
         if (!Utils.checkCaller() && !action.equals(BluetoothShare.TRANSFER_COMPLETED_ACTION)) {
-            Log.w(TAG, action + " Intent received for non-active user, ignoring!!");
+            Log.w(TAG, action + " received for non-active user, ignoring!!");
             return;
         }
+        if (V) Log.v(TAG, action + " Intent received for active user");
 
-       if (V) Log.v(TAG, action + " Intent received for active user");
         if (action.equals(BluetoothAdapter.ACTION_STATE_CHANGED)) {
             if (BluetoothAdapter.STATE_ON == intent.getIntExtra(
                     BluetoothAdapter.EXTRA_STATE, BluetoothAdapter.ERROR)) {

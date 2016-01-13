@@ -984,9 +984,6 @@ final class HeadsetClientStateMachine extends StateMachine {
                 }
                 break;
             case BluetoothHeadsetClientCall.CALL_STATE_HELD_BY_RESPONSE_AND_HOLD:
-                if (flag != BluetoothHeadsetClient.CALL_ACCEPT_NONE) {
-                    return;
-                }
                 action = HeadsetClientHalConstants.CALL_ACTION_BTRH_1;
                 break;
             case BluetoothHeadsetClientCall.CALL_STATE_ALERTING:
@@ -1525,7 +1522,12 @@ final class HeadsetClientStateMachine extends StateMachine {
                         }
                     }
                     transitionTo(mConnected);
-
+                    // the other profile connection should be initiated
+                    AdapterService adapterService = AdapterService.getAdapterService();
+                    if (adapterService != null) {
+                        adapterService.connectOtherProfile(device,
+                                AdapterService.PROFILE_CONN_CONNECTED);
+                    }
                     // TODO get max stream volume and scale 0-15
                     sendMessage(obtainMessage(HeadsetClientStateMachine.SET_SPEAKER_VOLUME,
                             mAudioManager.getStreamVolume(AudioManager.STREAM_BLUETOOTH_SCO), 0));
@@ -2330,6 +2332,12 @@ final class HeadsetClientStateMachine extends StateMachine {
                     }
 
                     transitionTo(mConnected);
+                    // the other profile connection should be initiated
+                    AdapterService adapterService = AdapterService.getAdapterService();
+                    if (adapterService != null) {
+                        adapterService.connectOtherProfile(device,
+                                AdapterService.PROFILE_CONN_CONNECTED);
+                    }
                     break;
                 default:
                     Log.e(TAG, "Audio State Device: " + device + " bad state: " + state);
